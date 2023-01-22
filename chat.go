@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -42,6 +43,11 @@ func receive(conn *icmp.PacketConn) {
 			continue
 		}
 
+		if msg.Type == ipv4.ICMPTypeEchoReply {
+			fmt.Print(".")
+			continue
+		}
+
 		text, err := msg.Body.Marshal(1)
 		if err != nil {
 			log.Printf("recerr: %s\n", err)
@@ -49,7 +55,7 @@ func receive(conn *icmp.PacketConn) {
 		}
 
 		//		log.Printf("[%s] rec -> %d bytes: %x\n", r, len(b), b)
-		log.Printf("[%s] rec: %s\n", r, text)
+		log.Printf("[%s] rec: %s; type: %s; code: %d\n", r, text, msg.Type, msg.Code)
 	}
 
 }
@@ -70,6 +76,10 @@ func send(conn *icmp.PacketConn) {
 		if err != nil {
 			log.Printf("ERROR: %s\n", err)
 			continue
+		}
+
+		if len(text) < 4 {
+			text += strings.Repeat(" ", 4-len(text))
 		}
 
 		msg := &icmp.Message{
