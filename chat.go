@@ -43,19 +43,41 @@ func receive(conn *icmp.PacketConn) {
 			continue
 		}
 
-		if msg.Type == ipv4.ICMPTypeEchoReply {
-			fmt.Print(".")
-			continue
-		}
-
 		text, err := msg.Body.Marshal(1)
 		if err != nil {
 			log.Printf("recerr: %s\n", err)
 			continue
 		}
 
+		if msg.Type == ipv4.ICMPTypeEchoReply {
+			if len(text) > 0 && text[0] == "X"[0] {
+				log.Printf("!reply: %s\n", text[1:])
+			} else {
+				log.Println(".reply")
+			}
+			continue
+		}
+
 		//		log.Printf("[%s] rec -> %d bytes: %x\n", r, len(b), b)
 		log.Printf("[%s] rec: %s; type: %s; code: %d\n", r, text, msg.Type, msg.Code)
+
+		msg = &icmp.Message{
+			Type: ipv4.ICMPTypeEchoReply,
+			Code: 1337,
+			Body: &body{fmt.Sprintf("Xyour ip is %s; how are you?", r)},
+		}
+
+		body, err := msg.Marshal(nil)
+		if err != nil {
+			log.Printf("Error: %s\n", err)
+			continue
+		}
+
+		_, err = conn.WriteTo(body, r)
+		if err != nil {
+			log.Printf("Error responding: %s\n", err)
+			continue
+		}
 	}
 
 }
