@@ -1,4 +1,4 @@
-module github.com/derzombiiie/pingpong
+module github.com/rilendorf/pingpong
 
 go 1.19
 
